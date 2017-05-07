@@ -2,7 +2,6 @@ package com.xiaoxiaomo.wechat.controller;
 
 import com.xiaoxiaomo.wechat.core.Storage;
 import com.xiaoxiaomo.wechat.service.LoginService;
-import com.xiaoxiaomo.wechat.service.imp.ContentServiceImp;
 import com.xiaoxiaomo.wechat.service.imp.LoginServiceImp;
 import com.xiaoxiaomo.wechat.utils.commmon.SleepUtils;
 import com.xiaoxiaomo.wechat.utils.enums.ResultEnum;
@@ -18,7 +17,6 @@ import org.slf4j.LoggerFactory;
 public class LoginController {
     private static Logger LOG = LoggerFactory.getLogger(LoginController.class);
 
-    private ContentServiceImp contentService = new ContentServiceImp();
     private LoginService loginService = new LoginServiceImp();
     private static Storage core = Storage.getInstance();
 
@@ -53,11 +51,14 @@ public class LoginController {
             LOG.info("4. 登陆超时，请重新扫描二维码图片");
         }
 
+        //5. 获取信息
         loginService.webInit();
         loginService.showMobileLogin();
-        contentService.getContact(true);
+
         CommonTool.clearScreen();
         LOG.info(String.format("LoginServiceImp successfully as %s", core.getNickName()));
+
+
         loginService.startReceiving();
         loginService.webWxGetContact();
         return ResultEnum.SUCCESS.getCode();

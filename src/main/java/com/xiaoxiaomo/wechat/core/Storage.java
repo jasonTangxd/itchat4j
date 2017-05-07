@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
+import com.xiaoxiaomo.wechat.utils.enums.storage.StorageLoginInfoEnum;
 
 /**
  * 核心存储类，全局只保存一份，单例模式
@@ -41,26 +42,28 @@ public class Storage {
 
 	private List<JSONObject> msgList = new ArrayList<JSONObject>();
 	private List<JSONObject> userSelfList = new ArrayList<JSONObject>(); // 登陆账号自身信息
-	private List<JSONObject> memberList = new ArrayList<JSONObject>(); // 好友+群聊+公众号+特殊账号
 	private List<JSONObject> contactList = new ArrayList<JSONObject>();// 好友
 	private List<String> groupIdList = new ArrayList<String>(); // 群聊，以String格式保存群的userName，如@@37da24fee2114e9475729b942d130190ffddb669411228651da3e8a8933603c8
 	private List<JSONObject> groupList = new ArrayList<JSONObject>(); // 群
 	private List<JSONObject> groupMemberList = new ArrayList<JSONObject>(); // 群聊成员字典
 	private List<JSONObject> publicUsersList = new ArrayList<JSONObject>();// 公众号／服务号
-
 	private List<JSONObject> specialUsersList = new ArrayList<JSONObject>();// 特殊账号
-	public Map<String, Object> loginInfo = new HashMap<String, Object>();
 
-	Map<String, Object> functionDict = new HashMap<String, Object>() {
+	public Map<String, Object> loginInfo = new HashMap<String, Object>(){//用户登录信息
+		{
+			for (StorageLoginInfoEnum info: StorageLoginInfoEnum.values()) {
+				put(info.getKey() , info.getType());
+			}
+		}
+	};
+
+	public Map<String, Object> functionDict = new HashMap<String, Object>() {
 		{
 			put("FriendChat", new HashMap<Object, Object>());
 			put("GroupChat", new HashMap<Object, Object>());
 			put("MpChat", new HashMap<Object, Object>());
 		}
 	};
-
-
-
 
 
 
@@ -72,13 +75,6 @@ public class Storage {
 		this.alive = alive;
 	}
 
-	public List<JSONObject> getMemberList() {
-		return memberList;
-	}
-
-	public void setMemberList(List<JSONObject> memberList) {
-		this.memberList = memberList;
-	}
 
 	public Map<String, Object> getLoginInfo() {
 		return loginInfo;
