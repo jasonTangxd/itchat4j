@@ -40,22 +40,22 @@ public class LoginController {
                 if (loginService.getQR(qrPath)) {
                     break;
                 } else if (count == 10) {
-                    LOG.error("2.2. 获取登陆二维码图片失败，系统退出");//// TODO: 2017/5/7
+                    LOG.error("2.2. 获取登陆二维码图片失败，系统退出");
                     System.exit(0);
                 }
             }
 
             LOG.info("3. 请扫描二维码图片，并在手机上确认");
-
-            if (loginService.login())
+            if (loginService.login()){
+                core.setAlive(true);
                 break;
+            }
             LOG.info("4. 登陆超时，请重新扫描二维码图片");
         }
 
 
         LOG.info("5. 登陆成功，微信初始化");
-        JSONObject object = loginService.webWxInit();
-        if( object == null ){
+        if( !loginService.webWxInit() ){
             LOG.info("6. 微信初始化异常");
             System.exit(0);
         }

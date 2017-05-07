@@ -11,9 +11,9 @@ package com.xiaoxiaomo.wechat.utils.enums.parameter;
  */
 public enum BaseParaEnum {
 
-    Skey("Skey", "skey"),
-    Sid("Sid", "wxsid"),
     Uin("Uin", "wxuin"),
+    Sid("Sid", "wxsid"),
+    Skey("Skey", "skey"),
     DeviceID("DeviceID", "pass_ticket");
 
     private String para;

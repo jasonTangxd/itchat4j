@@ -1,104 +1,85 @@
 package com.xiaoxiaomo.wechat.utils.tools;
 
+import com.alibaba.fastjson.JSONObject;
+import com.xiaoxiaomo.wechat.core.Storage;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import com.alibaba.fastjson.JSONObject;
-
-import com.xiaoxiaomo.wechat.core.Storage;
-import com.xiaoxiaomo.wechat.core.MsgCenter;
-
 /**
  * 微信小工具，如获好友列表等
- * 
- * @author https://github.com/yaphone
- * @date 创建时间：2017年5月4日 下午10:49:16
- * @version 1.0
- *
  */
 public class WeChatTools {
 
-	private static Storage core = Storage.getInstance();
+    private static Storage core = Storage.getInstance();
 
-	/**
-	 * 根据用户名发送文本消息
-	 * 
-	 * @author https://github.com/yaphone
-	 * @date 2017年5月4日 下午10:43:14
-	 * @param msg
-	 * @param toUserName
-	 */
-	public static void sendMsgByUserName(String msg, String toUserName) {
-		MsgCenter.sendMsg(msg, toUserName);
-	}
+    /**
+     * 获取好友列表，JSONObject格式
+     *
+     * @return
+     * @author https://github.com/yaphone
+     * @date 2017年5月4日 下午10:55:18
+     */
+    private static List<JSONObject> getJsonContactList() {
+        return core.getContactList();
+    }
 
-	/**
-	 * 获取好友列表，JSONObject格式
-	 * 
-	 * @author https://github.com/yaphone
-	 * @date 2017年5月4日 下午10:55:18
-	 * @return
-	 */
-	private static List<JSONObject> getJsonContactList() {
-		return core.getContactList();
-	}
+    /**
+     * <p>
+     * 通过RealName获取本次UserName
+     * </p>
+     * <p>
+     * 如NickName为"yaphone"，则获取UserName=
+     * "@1212d3356aea8285e5bbe7b91229936bc183780a8ffa469f2d638bf0d2e4fc63"，
+     * 可通过UserName发送消息
+     * </p>
+     *
+     * @param nickName
+     * @return
+     * @author https://github.com/yaphone
+     * @date 2017年5月4日 下午10:56:31
+     */
+    public static String getUserNameByNickName(String nickName) {
+        for (JSONObject o : core.getContactList()) {
+            if (o.getString("NickName").equals(nickName)) {
+                return o.getString("UserName");
+            }
+        }
+        return null;
+    }
 
-	/**
-	 * <p>
-	 * 通过RealName获取本次UserName
-	 * </p>
-	 * <p>
-	 * 如NickName为"yaphone"，则获取UserName=
-	 * "@1212d3356aea8285e5bbe7b91229936bc183780a8ffa469f2d638bf0d2e4fc63"，
-	 * 可通过UserName发送消息
-	 * </p>
-	 * 
-	 * @author https://github.com/yaphone
-	 * @date 2017年5月4日 下午10:56:31
-	 * @param nickName
-	 * @return
-	 */
-	public static String getUserNameByNickName(String nickName) {
-		for (JSONObject o : core.getContactList()) {
-			if (o.getString("NickName").equals(nickName)) {
-				return o.getString("UserName");
-			}
-		}
-		return null;
-	}
+    /**
+     * 返回好友昵称列表
+     *
+     * @return
+     * @author https://github.com/yaphone
+     * @date 2017年5月4日 下午11:37:20
+     */
+    public static List<String> getContactList() {
+        List<String> contactList = new ArrayList<String>();
+        for (JSONObject o : core.getContactList()) {
+            contactList.add(o.getString("NickName"));
+        }
+        return contactList;
+    }
 
-	/**
-	 * 返回好友昵称列表
-	 * 
-	 * @author https://github.com/yaphone
-	 * @date 2017年5月4日 下午11:37:20
-	 * @return
-	 */
-	public static List<String> getContactList() {
-		List<String> contactList = new ArrayList<String>();
-		for (JSONObject o : core.getContactList()) {
-			contactList.add(o.getString("NickName"));
-		}
-		return contactList;
-	}
+    /**
+     * 返回群列表
+     *
+     * @return
+     * @author https://github.com/yaphone
+     * @date 2017年5月5日 下午9:55:21
+     */
+    public static List<String> getGroupList() {
+        List<String> groupList = new ArrayList<String>();
+        for (JSONObject o : core.getGroupList()) {
+            groupList.add(o.getString("Name"));
+        }
+        return groupList;
+    }
 
-	/**
-	 * 返回群列表
-	 * 
-	 * @author https://github.com/yaphone
-	 * @date 2017年5月5日 下午9:55:21
-	 * @return
-	 */
-	public static List<String> getGroupList() {
-		List<String> groupList = new ArrayList<String>();
-		for (JSONObject o : core.getGroupList()) {
-			groupList.add(o.getString("Name"));
-		}
-		return groupList;
-	}
-
-	public static List<String> getGroupIdList() {
-		return core.getGroupIdList();
-	}
+    public static List<String> getGroupIdList() {
+        return core.getGroupIdList();
+    }
 
 }

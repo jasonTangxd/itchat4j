@@ -1,0 +1,9 @@
+Request URL: get
+https://webpush.wx.qq.com/cgi-bin/mmwebwx-bin/synccheck?
+r=1494166210958&
+skey=%40crypt_49e9029a_60053ab911d472a828b37c2f1313e186&
+sid=cqBSYy%2FMRGPrkzKL&uin=646266160&deviceid=e820531880958926&
+synckey=1_661706053%7C2_661706405%7C3_661706382%7C1000_1494151022&
+_=1494166150010
+
+window.synccheck={retcode:"0",selector:"2"}

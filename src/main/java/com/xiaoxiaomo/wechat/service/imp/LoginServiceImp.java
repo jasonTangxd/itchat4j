@@ -93,7 +93,7 @@ public class LoginServiceImp implements LoginService {
 
             if (qrPath == null)
                 qrPath = this.getClass().getResource("/img").getPath();
-            qrPath += File.separator + "QR.jpg";
+            qrPath += File.separator + Config.DEFAULT_QR;
 
             OutputStream out = new FileOutputStream(qrPath);
             byte[] bytes = EntityUtils.toByteArray(entity);
@@ -119,36 +119,41 @@ public class LoginServiceImp implements LoginService {
     @Override
     public boolean login() {
 
+        boolean isLogin = false ;
         //组装参数和URL
         List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
         params.add(new BasicNameValuePair(LoginParaEnum.LOGIN_ICON.para(), LoginParaEnum.LOGIN_ICON.value()));
         params.add(new BasicNameValuePair(LoginParaEnum.UUID.para(), storage.getUuid()));
         params.add(new BasicNameValuePair(LoginParaEnum.TIP.para(), LoginParaEnum.TIP.value()));
-        long millis = System.currentTimeMillis();
-        params.add(new BasicNameValuePair(LoginParaEnum.R.para(), String.valueOf(millis / 1579L)));
-        params.add(new BasicNameValuePair(LoginParaEnum._.para(), String.valueOf(millis)));
 
-        HttpEntity entity = HttpClient.doGet(URLEnum.LOGIN_URL.getUrl(), params, true, null);
-        try {
-            String result = EntityUtils.toString(entity);
-            String status = checklogin(result);
+        long time = 4000 ;
+        while ( !isLogin ) {
+            SleepUtils.sleep( time += 1000);
+            long millis = System.currentTimeMillis();
+            params.add(new BasicNameValuePair(LoginParaEnum.R.para(), String.valueOf(millis / 1579L)));
+            params.add(new BasicNameValuePair(LoginParaEnum._.para(), String.valueOf(millis)));
+            HttpEntity entity = HttpClient.doGet(URLEnum.LOGIN_URL.getUrl(), params, true, null);
 
-            if (ResultEnum.SUCCESS.getCode().equals(status)) {
-                LOG.info(("登陆成功"));
-                processLoginInfo(result);   //处理结果
-                return true;
+            try {
+                String result = EntityUtils.toString(entity);
+                String status = checklogin(result);
+
+                if (ResultEnum.SUCCESS.getCode().equals(status)) {
+                    LOG.info(("登陆成功"));
+                    processLoginInfo(result);   //处理结果
+                    isLogin = true ;
+                    break;
+                }
+
+                if (ResultEnum.WAIT_CONFIRM.getCode().equals(status)) {
+                    LOG.info("请点击微信确认按钮，进行登陆");
+                }
+
+            } catch (Exception e) {
+                LOG.error("微信登陆异常！", e);
             }
-
-            if (ResultEnum.WAIT_CONFIRM.getCode().equals(status)) {
-                LOG.info("请点击微信确认按钮，进行登陆");
-                SleepUtils.sleep(10000);
-                login();
-            }
-
-        } catch (Exception e) {
-            LOG.error("微信登陆异常！", e);
         }
-        return false;
+        return isLogin ;
     }
 
 
@@ -223,7 +228,7 @@ public class LoginServiceImp implements LoginService {
         }
     }
 
-    Map<String, List<String>> getPossibleUrlMap() {
+    private Map<String, List<String>> getPossibleUrlMap() {
         Map<String, List<String>> possibleUrlMap = new HashMap<String, List<String>>();
         possibleUrlMap.put("wx2.qq.com", new ArrayList<String>() {
             private static final long serialVersionUID = 1L;
@@ -262,10 +267,14 @@ public class LoginServiceImp implements LoginService {
     }
 
     @Override
-    public JSONObject webWxInit() {
+    public boolean webWxInit() {
 
         //组装请求URL和参数
-        String url = URLEnum.INIT_URL.getUrl() + String.valueOf(new Date().getTime());
+        String url = String.format(URLEnum.INIT_URL.getUrl(),
+                storage.getLoginInfo().get(StorageLoginInfoEnum.url.getKey()),
+                String.valueOf(System.currentTimeMillis()/3158L),
+                storage.getLoginInfo().get(StorageLoginInfoEnum.pass_ticket.getKey()));
+
         Map<String, Object> paramMap = storage.getParamMap();
 
         //请求初始化接口
@@ -275,7 +284,7 @@ public class LoginServiceImp implements LoginService {
             JSONObject obj = JSON.parseObject(result);
 
 
-            LOG.info(obj.toJSONString());//调试
+            LOG.info(obj.toString());//调试
             JSONObject user = obj.getJSONObject(StorageLoginInfoEnum.User.getKey());
             JSONObject syncKey = obj.getJSONObject(StorageLoginInfoEnum.SyncKey.getKey());
 
@@ -289,17 +298,19 @@ public class LoginServiceImp implements LoginService {
                 sb.append(syncArray.getJSONObject(i).getString("Key") + "_"
                         + syncArray.getJSONObject(i).getString("Val") + "|");
             }
+            //1_661706053|2_661706420|3_661706415|1000_1494151022|
             String synckey = sb.toString();
 
+            //1_661706053|2_661706420|3_661706415|1000_1494151022
             storage.getLoginInfo().put(StorageLoginInfoEnum.synckey.getKey(), synckey.substring(0, synckey.length() - 1));// 1_656161336|2_656161626|3_656161313|11_656159955|13_656120033|201_1492273724|1000_1492265953|1001_1492250432|1004_1491805192
             storage.setUserName(user.getString("UserName"));
             storage.setNickName(user.getString("NickName"));
             storage.getUserSelfList().add(obj.getJSONObject("User"));//// TODO: 2017/5/7  多余
-            return obj;
+            return true ;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return false ;
     }
 
 
@@ -310,8 +321,9 @@ public class LoginServiceImp implements LoginService {
     public void wxStatusNotify() {
 
         //组装请求URL和参数
-        String url = URLEnum.STATUS_NOTIFY_URL.getUrl()
-                + storage.getLoginInfo().get(StorageLoginInfoEnum.pass_ticket.getKey());
+        String url = String.format(URLEnum.STATUS_NOTIFY_URL.getUrl(),
+                storage.getLoginInfo().get(StorageLoginInfoEnum.pass_ticket.getKey()));
+
 
         Map<String, Object> paramMap = storage.getParamMap();
         paramMap.put(StatusNotifyParaEnum.CODE.para(), StatusNotifyParaEnum.CODE.value());
@@ -322,7 +334,7 @@ public class LoginServiceImp implements LoginService {
 
         try {
             HttpEntity entity = HttpClient.doPost(url, paramStr);
-            EntityUtils.toString(entity, "UTF-8");
+            EntityUtils.toString(entity, "UTF-8");//TODO
         } catch (Exception e) {
             LOG.error("微信状态通知接口失败！", e);
         }
@@ -352,6 +364,7 @@ public class LoginServiceImp implements LoginService {
                         JSONObject syncNewMassage = syncNewMassage();
                         if (syncNewMassage != null && syncNewMassage.containsKey("AddMsgList")) {
 
+                            System.out.println(syncNewMassage.toString());
                             //添加消息到队列
                             JSONArray produceMsg = MsgCenter.produceMsg(syncNewMassage.getJSONArray("AddMsgList"));
                             for (Iterator iterator = produceMsg.iterator(); iterator.hasNext();) {
@@ -440,6 +453,7 @@ public class LoginServiceImp implements LoginService {
         try {
             String text = EntityUtils.toString(entity, "UTF-8");
             JSONObject obj = JSON.parseObject(text);
+            System.out.println(obj.toString());
             if (obj.getJSONObject("BaseResponse").getInteger("Ret") == 0) {
                 storage.getLoginInfo().put("SyncKey", obj.getJSONObject("SyncCheckKey"));
                 JSONArray syncArray = obj.getJSONObject("SyncKey").getJSONArray("List");
@@ -449,7 +463,8 @@ public class LoginServiceImp implements LoginService {
                             + syncArray.getJSONObject(i).getString("Val") + "|");
                 }
                 String synckey = sb.toString();
-                storage.getLoginInfo().put("synckey", synckey.substring(0, synckey.length() - 1));// 1_656161336|2_656161626|3_656161313|11_656159955|13_656120033|201_1492273724|1000_1492265953|1001_1492250432|1004_1491805192
+                // 1_656161336|2_656161626|3_656161313|11_656159955|13_656120033|201_1492273724|1000_1492265953|1001_1492250432|1004_1491805192
+                storage.getLoginInfo().put("synckey", synckey.substring(0, synckey.length() - 1));
                 return obj;
             }
         } catch (Exception e) {

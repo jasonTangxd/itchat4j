@@ -1,7 +1,5 @@
 package com.xiaoxiaomo.wechat.service;
 
-import com.alibaba.fastjson.JSONObject;
-
 /**
  *
  * 登陆处理接口服务
@@ -20,7 +18,7 @@ public interface LoginService {
     boolean login();
 
     /** web初始化 */
-    JSONObject webWxInit();
+    boolean webWxInit();
 
     /** 微信状态通知 */
     void wxStatusNotify();

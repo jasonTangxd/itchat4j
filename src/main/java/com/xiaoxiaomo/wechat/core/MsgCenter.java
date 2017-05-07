@@ -6,6 +6,7 @@ import com.xiaoxiaomo.wechat.service.MsgHandleService;
 import com.xiaoxiaomo.wechat.service.MsgSendService;
 import com.xiaoxiaomo.wechat.service.imp.MsgHandleServiceImp;
 import com.xiaoxiaomo.wechat.service.imp.MsgSendServiceImp;
+import com.xiaoxiaomo.wechat.service.imp.TuLingRobotImp;
 import com.xiaoxiaomo.wechat.utils.commmon.SleepUtils;
 import com.xiaoxiaomo.wechat.utils.enums.MsgInfoEnum;
 import com.xiaoxiaomo.wechat.utils.enums.MsgTypeEnum;
@@ -29,6 +30,7 @@ public class MsgCenter {
 
     public MsgCenter() {
         this.msgHandle = new MsgHandleServiceImp();
+//        this.msgHandle = new TuLingRobotImp();
         this.msgSend = new MsgSendServiceImp();
     }
 

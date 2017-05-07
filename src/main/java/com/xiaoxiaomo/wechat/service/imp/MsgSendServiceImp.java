@@ -1,6 +1,7 @@
 package com.xiaoxiaomo.wechat.service.imp;
 
 import com.alibaba.fastjson.JSON;
+import com.xiaoxiaomo.wechat.core.MsgCenter;
 import com.xiaoxiaomo.wechat.core.Storage;
 import com.xiaoxiaomo.wechat.service.MsgSendService;
 import com.xiaoxiaomo.wechat.utils.commmon.http.HttpClient;
