@@ -5,7 +5,7 @@ import com.xiaoxiaomo.wechat.service.LoginService;
 import com.xiaoxiaomo.wechat.service.imp.LoginServiceImp;
 import com.xiaoxiaomo.wechat.utils.commmon.SleepUtils;
 import com.xiaoxiaomo.wechat.utils.enums.ResultEnum;
-import com.xiaoxiaomo.wechat.utils.tools.CommonTool;
+import com.xiaoxiaomo.wechat.utils.tools.CommonTools;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,15 +51,21 @@ public class LoginController {
             LOG.info("4. 登陆超时，请重新扫描二维码图片");
         }
 
-        //5. 获取信息
-        loginService.webInit();
-        loginService.showMobileLogin();
 
-        CommonTool.clearScreen();
+        //微信初始化
+        loginService.webWxInit();
+
+        //微信状态通知
+        loginService.wxStatusNotify();
+
+        CommonTools.clearScreen();
         LOG.info(String.format("LoginServiceImp successfully as %s", core.getNickName()));
 
 
+        //接收消息
         loginService.startReceiving();
+
+        //. 获取信息
         loginService.webWxGetContact();
         return ResultEnum.SUCCESS.getCode();
     }

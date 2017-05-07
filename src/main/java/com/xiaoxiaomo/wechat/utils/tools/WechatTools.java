@@ -6,6 +6,7 @@ import java.util.List;
 import com.alibaba.fastjson.JSONObject;
 
 import com.xiaoxiaomo.wechat.core.Storage;
+import com.xiaoxiaomo.wechat.core.MsgCenter;
 
 /**
  * 微信小工具，如获好友列表等
@@ -15,7 +16,7 @@ import com.xiaoxiaomo.wechat.core.Storage;
  * @version 1.0
  *
  */
-public class WechatTools {
+public class WeChatTools {
 
 	private static Storage core = Storage.getInstance();
 
@@ -28,7 +29,7 @@ public class WechatTools {
 	 * @param toUserName
 	 */
 	public static void sendMsgByUserName(String msg, String toUserName) {
-		MessageTools.sendMsg(msg, toUserName);
+		MsgCenter.sendMsg(msg, toUserName);
 	}
 
 	/**

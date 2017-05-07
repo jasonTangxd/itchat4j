@@ -5,7 +5,7 @@ import com.xiaoxiaomo.wechat.controller.LoginController;
 import com.xiaoxiaomo.wechat.core.Storage;
 import com.xiaoxiaomo.wechat.service.MsgService;
 import com.xiaoxiaomo.wechat.utils.enums.MsgInfoEnum;
-import com.xiaoxiaomo.wechat.utils.tools.MessageTools;
+import com.xiaoxiaomo.wechat.core.MsgCenter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class WeChat {
     private static final Logger LOG = LoggerFactory.getLogger(WeChat.class);
-    private static Storage core = Storage.getInstance();
+    private static Storage storage = Storage.getInstance();
 
     private MsgService msgService;
 
@@ -39,36 +39,36 @@ public class WeChat {
             @Override
             public void run() {
                 while (true) {
-                    if (core.getMsgList().size() > 0
-                            && core.getMsgList().get(0).containsKey("Content")) {
+                    if (storage.getMsgList().size() > 0
+                            && storage.getMsgList().get(0).containsKey("Content")) {
 
-                        JSONObject msg = core.getMsgList().get(0);
+                        JSONObject msg = storage.getMsgList().get(0);
 
                         if (MsgInfoEnum.TEXT.getCode().equals(msg.getString("Type"))) {
                             String result = msgService.textMsgHandle(msg);
-                            MessageTools.send(result, msg.getString("FromUserName"), "");
+                            MsgCenter.send(result, msg.getString("FromUserName"), "");
                         }
 
                         if (MsgInfoEnum.PIC.getCode().equals(msg.getString("Type"))) {
                             String result = msgService.picMsgHandle(msg);
-                            MessageTools.send(result, msg.getString("FromUserName"), "");
+                            MsgCenter.send(result, msg.getString("FromUserName"), "");
                         }
 
                         if (MsgInfoEnum.VOICE.getCode().equals(msg.getString("Type"))) {
                             String result = msgService.voiceMsgHandle(msg);
-                            MessageTools.send(result, msg.getString("FromUserName"), "");
+                            MsgCenter.send(result, msg.getString("FromUserName"), "");
                         }
 
                         if (MsgInfoEnum.VIDEO.getCode().equals(msg.getString("Type"))) {
                             String result = msgService.videoMsgHandle(msg);
-                            MessageTools.send(result, msg.getString("FromUserName"), "");
+                            MsgCenter.send(result, msg.getString("FromUserName"), "");
                         }
 
                         if (MsgInfoEnum.NAME_CARD.getCode().equals(msg.getString("Type"))) {
                             String result = msgService.nameCardMsgHandle(msg);
-                            MessageTools.send(result, msg.getString("FromUserName"), "");
+                            MsgCenter.send(result, msg.getString("FromUserName"), "");
                         }
-                        core.getMsgList().remove(0);
+                        storage.getMsgList().remove(0);
                     }
                     try {
                         TimeUnit.MILLISECONDS.sleep(1000);

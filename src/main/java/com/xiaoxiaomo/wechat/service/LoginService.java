@@ -2,6 +2,8 @@ package com.xiaoxiaomo.wechat.service;
 
 import com.alibaba.fastjson.JSONObject;
 
+import java.util.Map;
+
 /**
  *
  * 登陆处理接口
@@ -20,14 +22,15 @@ public interface LoginService {
     boolean login();
 
     /** web初始化 */
-    JSONObject webInit();
+    JSONObject webWxInit();
 
-    /**  */
-    void showMobileLogin();
+    /** 微信状态通知 */
+    void wxStatusNotify();
 
     /** 接收消息 */
     void startReceiving();
 
     /** 获取联系人信息 */
     boolean webWxGetContact();
+
 }

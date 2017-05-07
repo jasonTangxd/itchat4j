@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
+import com.xiaoxiaomo.wechat.utils.enums.parameter.BaseParaEnum;
 import com.xiaoxiaomo.wechat.utils.enums.storage.StorageLoginInfoEnum;
 
 /**
@@ -65,6 +66,19 @@ public class Storage {
 		}
 	};
 
+
+	/** 请求参数 */
+	public Map<String, Object> getParamMap() {
+		return new HashMap<String, Object>(1) {
+			{
+				Map<String, String> map = new HashMap<String, String>();
+				for (BaseParaEnum baseRequest : BaseParaEnum.values()) {
+					map.put(baseRequest.para(), getLoginInfo().get(baseRequest.value()).toString());
+				}
+				put("BaseRequest", map);
+			}
+		};
+	}
 
 
 	public boolean isAlive() {

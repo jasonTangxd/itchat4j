@@ -31,7 +31,7 @@ import com.xiaoxiaomo.wechat.core.Config;
  * @version 1.0
  *
  */
-public class CommonTool {
+public class CommonTools {
 
 	public static boolean printQr(String qrPath) {
 

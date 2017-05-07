@@ -4,16 +4,16 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.xiaoxiaomo.wechat.core.Config;
+import com.xiaoxiaomo.wechat.core.MsgCenter;
 import com.xiaoxiaomo.wechat.core.Storage;
 import com.xiaoxiaomo.wechat.service.LoginService;
 import com.xiaoxiaomo.wechat.utils.commmon.SleepUtils;
 import com.xiaoxiaomo.wechat.utils.commmon.http.HttpClient;
 import com.xiaoxiaomo.wechat.utils.enums.ResultEnum;
 import com.xiaoxiaomo.wechat.utils.enums.URLEnum;
-import com.xiaoxiaomo.wechat.utils.enums.storage.BaseRequestEnum;
-import com.xiaoxiaomo.wechat.utils.enums.storage.StorageLoginInfoEnum;
-import com.xiaoxiaomo.wechat.utils.tools.CommonTool;
-import com.xiaoxiaomo.wechat.utils.tools.MessageTools;
+import com.xiaoxiaomo.wechat.utils.enums.parameter.*;
+import com.xiaoxiaomo.wechat.utils.enums.storage.*;
+import com.xiaoxiaomo.wechat.utils.tools.CommonTools;
 import org.apache.http.HttpEntity;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
@@ -48,15 +48,19 @@ public class LoginServiceImp implements LoginService {
     @Override
     public String getUuid() {
 
+        //组装参数和URL
         List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
-        params.add(new BasicNameValuePair("appid", "wx782c26e4c19acffb"));
-        params.add(new BasicNameValuePair("fun", "new"));
+        params.add(new BasicNameValuePair(UUIDParaEnum.APP_ID.para(), UUIDParaEnum.APP_ID.value()));
+        params.add(new BasicNameValuePair(UUIDParaEnum.FUN.para(), UUIDParaEnum.FUN.value()));
+        params.add(new BasicNameValuePair(UUIDParaEnum.LANG.para(), UUIDParaEnum.LANG.value()));
+        params.add(new BasicNameValuePair(UUIDParaEnum._.para(), String.valueOf(System.currentTimeMillis())));
+
         HttpEntity entity = HttpClient.doGet(URLEnum.UUID_URL.getUrl(), params, true, null);
 
         try {
             String result = EntityUtils.toString(entity);
             String regEx = "window.QRLogin.code = (\\d+); window.QRLogin.uuid = \"(\\S+?)\";";
-            Matcher matcher = CommonTool.getMatcher(regEx, result);
+            Matcher matcher = CommonTools.getMatcher(regEx, result);
             if (matcher.find()) {
                 if ((ResultEnum.SUCCESS.getCode().equals(matcher.group(1)))) {
                     storage.setUuid(matcher.group(2));
@@ -78,20 +82,25 @@ public class LoginServiceImp implements LoginService {
     @Override
     public boolean getQR(String qrPath) {
 
-        if (qrPath == null)
-            qrPath = this.getClass().getResource("/img").getPath();
-        qrPath += File.separator + "QR.jpg";
+        //组装参数和URL
+        List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
+        params.add(new BasicNameValuePair(QrParaEnum.T.para(), QrParaEnum.T.value()));
+        params.add(new BasicNameValuePair(QrParaEnum._.para(), String.valueOf(System.currentTimeMillis())));
 
         String qrUrl = URLEnum.QRCODE_URL.getUrl() + storage.getUuid();
-        HttpEntity entity = HttpClient.doGet(qrUrl, null, true, null);
+        HttpEntity entity = HttpClient.doGet(qrUrl, params, true, null);
         try {
+
+            if (qrPath == null)
+                qrPath = this.getClass().getResource("/img").getPath();
+            qrPath += File.separator + "QR.jpg";
 
             OutputStream out = new FileOutputStream(qrPath);
             byte[] bytes = EntityUtils.toByteArray(entity);
             out.write(bytes);
             out.flush();
             out.close();
-            CommonTool.printQr(qrPath); // 打开登陆二维码图片
+            CommonTools.printQr(qrPath); // 打开登陆二维码图片
 
         } catch (Exception e) {
             LOG.error("获取登陆二维码图片失败", e);
@@ -101,20 +110,24 @@ public class LoginServiceImp implements LoginService {
         return true;
     }
 
+
     /**
-     * 登陆
+     * 登陆(等待登陆)
      *
      * @return
      */
     @Override
     public boolean login() {
-        Long localTime = new Date().getTime();
+
+        //组装参数和URL
         List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
-        params.add(new BasicNameValuePair("loginicon", "true"));
-        params.add(new BasicNameValuePair("uuid", storage.getUuid()));
-        params.add(new BasicNameValuePair("tip", "0"));
-        params.add(new BasicNameValuePair("r", String.valueOf(localTime / 1579L)));
-        params.add(new BasicNameValuePair("_", String.valueOf(localTime)));
+        params.add(new BasicNameValuePair(LoginParaEnum.LOGIN_ICON.para(), LoginParaEnum.LOGIN_ICON.value()));
+        params.add(new BasicNameValuePair(LoginParaEnum.UUID.para(), storage.getUuid()));
+        params.add(new BasicNameValuePair(LoginParaEnum.TIP.para(), LoginParaEnum.TIP.value()));
+        long millis = System.currentTimeMillis();
+        params.add(new BasicNameValuePair(LoginParaEnum.R.para(), String.valueOf(millis / 1579L)));
+        params.add(new BasicNameValuePair(LoginParaEnum._.para(), String.valueOf(millis)));
+
         HttpEntity entity = HttpClient.doGet(URLEnum.LOGIN_URL.getUrl(), params, true, null);
         try {
             String result = EntityUtils.toString(entity);
@@ -147,7 +160,7 @@ public class LoginServiceImp implements LoginService {
      */
     public String checklogin(String result) {
         String regEx = "window.code=(\\d+)";
-        Matcher matcher = CommonTool.getMatcher(regEx, result);
+        Matcher matcher = CommonTools.getMatcher(regEx, result);
         if (matcher.find()) {
             return matcher.group(1);
         }
@@ -161,7 +174,7 @@ public class LoginServiceImp implements LoginService {
      */
     public void processLoginInfo(String loginContent) {
         String regEx = "window.redirect_uri=\"(\\S+)\";";
-        Matcher matcher = CommonTool.getMatcher(regEx, loginContent);
+        Matcher matcher = CommonTools.getMatcher(regEx, loginContent);
         if (matcher.find()) {
             String originalUrl = matcher.group(1);
 
@@ -194,7 +207,7 @@ public class LoginServiceImp implements LoginService {
                 LOG.error(e.getMessage(), e);
                 return;
             }
-            Document doc = CommonTool.xmlParser(text);
+            Document doc = CommonTools.xmlParser(text);
             if (doc != null) {
                 //4
                 storage.getLoginInfo().put(StorageLoginInfoEnum.skey.getKey(),
@@ -249,19 +262,11 @@ public class LoginServiceImp implements LoginService {
     }
 
     @Override
-    public JSONObject webInit() {
+    public JSONObject webWxInit() {
 
         //组装请求URL和参数
         String url = URLEnum.INIT_URL.getUrl() + String.valueOf(new Date().getTime());
-        Map<String, Map<String, String>> paramMap = new HashMap<String, Map<String, String>>(1) {
-            {
-                Map<String, String> map = new HashMap<String, String>();
-                for (BaseRequestEnum baseRequest : BaseRequestEnum.values()) {
-                    map.put(baseRequest.getKey(), storage.getLoginInfo().get(baseRequest.getStorageKey()).toString());
-                }
-                put("baseRequest", map);
-            }
-        };
+        Map<String, Object> paramMap = storage.getParamMap();
 
         //请求初始化接口
         HttpEntity entity = HttpClient.doPost(url, JSON.toJSONString(paramMap));
@@ -275,7 +280,7 @@ public class LoginServiceImp implements LoginService {
             JSONObject syncKey = obj.getJSONObject(StorageLoginInfoEnum.SyncKey.getKey());
 
             storage.getLoginInfo().put(StorageLoginInfoEnum.InviteStartCount.getKey(), obj.getInteger(StorageLoginInfoEnum.InviteStartCount.getKey()));
-            storage.getLoginInfo().put(StorageLoginInfoEnum.User.getKey(), CommonTool.structFriendInfo(user)); // 为userObj添加新字段//// TODO: 2017/5/7  多余
+            storage.getLoginInfo().put(StorageLoginInfoEnum.User.getKey(), CommonTools.structFriendInfo(user)); // 为userObj添加新字段//// TODO: 2017/5/7  多余
             storage.getLoginInfo().put(StorageLoginInfoEnum.SyncKey.getKey(), syncKey);
 
             JSONArray syncArray = syncKey.getJSONArray("List");
@@ -297,31 +302,29 @@ public class LoginServiceImp implements LoginService {
         return null;
     }
 
-    @Override
-    public void showMobileLogin() {
-        String mobileUrl = URLEnum.MOBILE_URL.getUrl() + storage.getLoginInfo().get(StorageLoginInfoEnum.pass_ticket.getKey());
-        Map<String, Object> paramMap = new HashMap<String, Object>();
-        Map<String, Map<String, String>> baseRequest = new HashMap<String, Map<String, String>>(1) {
-            {
-                Map<String, String> map = new HashMap<String, String>();
-                for (BaseRequestEnum baseRequest : BaseRequestEnum.values()) {
-                    map.put(baseRequest.getKey(), storage.getLoginInfo().get(baseRequest.getStorageKey()).toString());
-                }
-                put("baseRequest", map);
-            }
-        };
 
-        paramMap.put("BaseRequest", baseRequest);
-        paramMap.put("Code", 3);
-        paramMap.put("FromUserName", storage.getUserName());
-        paramMap.put("ToUserName", storage.getUserName());
-        paramMap.put("ClientMsgId", String.valueOf(new Date().getTime()));
+    /**
+     * 微信状态通知
+     */
+    @Override
+    public void wxStatusNotify() {
+
+        //组装请求URL和参数
+        String url = URLEnum.STATUS_NOTIFY_URL.getUrl()
+                + storage.getLoginInfo().get(StorageLoginInfoEnum.pass_ticket.getKey());
+
+        Map<String, Object> paramMap = storage.getParamMap();
+        paramMap.put(StatusNotifyParaEnum.CODE.para(), StatusNotifyParaEnum.CODE.value());
+        paramMap.put(StatusNotifyParaEnum.FROM_USERNAME.para(), storage.getUserName());
+        paramMap.put(StatusNotifyParaEnum.TO_USERNAME.para(), storage.getUserName());
+        paramMap.put(StatusNotifyParaEnum.CLIENT_MSG_ID.para(), System.currentTimeMillis());
         String paramStr = JSON.toJSONString(paramMap);
+
         try {
-            HttpEntity entity = HttpClient.doPost(mobileUrl, paramStr);
+            HttpEntity entity = HttpClient.doPost(url, paramStr);
             EntityUtils.toString(entity, "UTF-8");
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
+            LOG.error("微信状态通知接口失败！", e);
         }
     }
 
@@ -335,40 +338,40 @@ public class LoginServiceImp implements LoginService {
             public void run() {
                 while (storage.isAlive()) {
                     try {
-                        String i = syncCheck();
-                        if (i == null) {
+                        //1. 心跳检查
+                        String heartBeatState = syncCheck();
+                        if (null == heartBeatState) {
                             storage.setAlive(false);
-                        } else if (i.equals("0")) {
-                            continue;
-                        } else {
-                            JSONArray msgList = new JSONArray();
-                            JSONObject msgObj = getMsg();
-                            if (msgObj != null) {
-                                msgList = msgObj.getJSONArray("AddMsgList");
-                                msgList = MessageTools.produceMsg(msgList);
-                                for (int j = 0; j < msgList.size(); j++) {
-                                    storage.getMsgList().add(msgList.getJSONObject(j));
-                                }
+                        }
 
-                                // TODO chatroomMsg =
-                                // update_local_chatrooms(self, chatroomList)
-                                // TODO self.msgList.put(chatroomMsg)
-                                // TODO update_local_friends(self, otherList)
+                        if ("0".equals(heartBeatState)) {
+                            continue;
+                        }
+
+                        //2. 获取消息，并且把新消息添加到消息队列
+                        JSONObject syncNewMassage = syncNewMassage();
+                        if (syncNewMassage != null && syncNewMassage.containsKey("AddMsgList")) {
+
+                            //添加消息到队列
+                            JSONArray produceMsg = MsgCenter.produceMsg(syncNewMassage.getJSONArray("AddMsgList"));
+                            for (Iterator iterator = produceMsg.iterator(); iterator.hasNext();) {
+                                storage.getMsgList().add((JSONObject) iterator.next());
                             }
+
+                            // TODO chatroomMsg =
+                            // update_local_chatrooms(self, chatroomList)
+                            // TODO self.msgList.put(chatroomMsg)
+                            // TODO update_local_friends(self, otherList)
                         }
                         retryCount = 0;
 
                     } catch (Exception e) {
-                        LOG.info(e.getMessage());
+                        LOG.error(e.getMessage(), e);
                         retryCount += 1;
                         if (storage.getReceivingRetryCount() < retryCount) {
                             storage.setAlive(false);
                         } else {
-                            try {
-                                Thread.sleep(1000);
-                            } catch (InterruptedException e1) {
-                                LOG.error(e.getMessage());
-                            }
+                            SleepUtils.sleep(2000);
                         }
                     }
 
@@ -379,26 +382,22 @@ public class LoginServiceImp implements LoginService {
 
 
     /**
-     * 保活心跳
-     * <p>
-     * String syncUrl = "https://webpush.wx2.qq.com/cgi-bin/mmwebwx-bin";
+     * 消息检查
      *
      * @return
-     * @author https://github.com/yaphone
-     * @date 2017年4月16日 上午11:11:34
      */
-    public String syncCheck() {
+    private String syncCheck() {
 
         //组装请求URL和参数
-        String url = storage.getLoginInfo().get(StorageLoginInfoEnum.syncUrl.getKey()) + URLEnum.SYNC_CHECK_URL.getUrl();
+        String url = storage.getLoginInfo().get(StorageLoginInfoEnum.syncUrl.getKey()) +
+                URLEnum.SYNC_CHECK_URL.getUrl();
+
         List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
-        params.add(new BasicNameValuePair("r", String.valueOf(new Date().getTime())));
-        params.add(new BasicNameValuePair(StorageLoginInfoEnum.skey.getKey(), (String) storage.getLoginInfo().get(StorageLoginInfoEnum.skey.getKey())));
-        params.add(new BasicNameValuePair(BaseRequestEnum.Sid.getKey(), (String) storage.getLoginInfo().get(StorageLoginInfoEnum.wxsid.getKey())));
-        params.add(new BasicNameValuePair(BaseRequestEnum.Uin.getKey(), (String) storage.getLoginInfo().get(StorageLoginInfoEnum.wxuin.getKey())));
-        params.add(new BasicNameValuePair(StorageLoginInfoEnum.deviceid.getKey(), (String) storage.getLoginInfo().get(StorageLoginInfoEnum.deviceid.getKey())));
-        params.add(new BasicNameValuePair(StorageLoginInfoEnum.synckey.getKey(), (String) storage.getLoginInfo().get(StorageLoginInfoEnum.synckey.getKey())));
-        params.add(new BasicNameValuePair("_", String.valueOf(new Date().getTime())));
+        for (BaseParaEnum baseRequest : BaseParaEnum.values()) {
+            params.add(new BasicNameValuePair(baseRequest.para(), storage.getLoginInfo().get(baseRequest.value()).toString()));
+        }
+        params.add(new BasicNameValuePair("r", String.valueOf(System.currentTimeMillis())));
+        params.add(new BasicNameValuePair("_", String.valueOf(System.currentTimeMillis())));
 
         HttpEntity entity = HttpClient.doGet(url, params, true, null);
         try {
@@ -407,7 +406,7 @@ public class LoginServiceImp implements LoginService {
             }
             String text = EntityUtils.toString(entity);
             String regEx = "window.synccheck=\\{retcode:\"(\\d+)\",selector:\"(\\d+)\"\\}";
-            Matcher matcher = CommonTool.getMatcher(regEx, text);
+            Matcher matcher = CommonTools.getMatcher(regEx, text);
             if (!matcher.find() || matcher.group(1).equals("2")) {
                 LOG.info(String.format("Unexpected sync check result: %s", text));
             } else {
@@ -420,37 +419,28 @@ public class LoginServiceImp implements LoginService {
     }
 
 
-    JSONObject getMsg() {
-        JSONObject result = new JSONObject();
+    /**
+     * 获取最新消息
+     *
+     * @return
+     */
+    private JSONObject syncNewMassage() {
         String url = String.format(URLEnum.WEB_WX_SYNC_URL.getUrl(),
                 storage.getLoginInfo().get(StorageLoginInfoEnum.url.getKey()),
                 storage.getLoginInfo().get(StorageLoginInfoEnum.wxsid.getKey()),
                 storage.getLoginInfo().get(StorageLoginInfoEnum.skey.getKey()),
                 storage.getLoginInfo().get(StorageLoginInfoEnum.pass_ticket.getKey()));
 
-        Map<String, Object> paramMap = new HashMap<String, Object>();
-        Map<String, Map<String, String>> baseRequest = new HashMap<String, Map<String, String>>(1) {
-            {
-                Map<String, String> map = new HashMap<String, String>();
-                for (BaseRequestEnum baseRequest : BaseRequestEnum.values()) {
-                    map.put(baseRequest.getKey(), storage.getLoginInfo().get(baseRequest.getStorageKey()).toString());
-                }
-                put("baseRequest", map);
-            }
-        };
-
-        paramMap.put("BaseRequest", baseRequest);
+        Map<String, Object> paramMap = storage.getParamMap();
         paramMap.put(StorageLoginInfoEnum.synckey.getKey(), storage.getLoginInfo().get(StorageLoginInfoEnum.synckey.getKey()));
         paramMap.put("rr", -new Date().getTime() / 1000);
         String paramStr = JSON.toJSONString(paramMap);
+        HttpEntity entity = HttpClient.doPost(url, paramStr);
+
         try {
-            HttpEntity entity = HttpClient.doPost(url, paramStr);
             String text = EntityUtils.toString(entity, "UTF-8");
             JSONObject obj = JSON.parseObject(text);
-            if (obj.getJSONObject("BaseResponse").getInteger("Ret") != 0) {
-                result = null;
-            } else {
-                result = obj;
+            if (obj.getJSONObject("BaseResponse").getInteger("Ret") == 0) {
                 storage.getLoginInfo().put("SyncKey", obj.getJSONObject("SyncCheckKey"));
                 JSONArray syncArray = obj.getJSONObject("SyncKey").getJSONArray("List");
                 StringBuilder sb = new StringBuilder();
@@ -460,35 +450,26 @@ public class LoginServiceImp implements LoginService {
                 }
                 String synckey = sb.toString();
                 storage.getLoginInfo().put("synckey", synckey.substring(0, synckey.length() - 1));// 1_656161336|2_656161626|3_656161313|11_656159955|13_656120033|201_1492273724|1000_1492265953|1001_1492250432|1004_1491805192
+                return obj;
             }
         } catch (Exception e) {
-            LOG.info(e.getMessage());
+            LOG.error("获取最新消息失败！", e);
         }
-        return result;
+        return null;
 
     }
 
     /**
-     * <p>
      * 获取联系人信息，成功返回true，失败返回false
-     * </p>
-     * <p>
-     * get all contacts: people, group, public user, special user
-     * </p>
      *
      * @return
-     * @author https://github.com/yaphone
-     * @date 2017年5月3日 上午12:28:51
      */
     @Override
     public boolean webWxGetContact() {
 
         String url = String.format(URLEnum.WEB_WX_GET_CONTACT.getUrl(), storage.getLoginInfo().get(StorageLoginInfoEnum.url.getKey()));
-        List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
-        params.add(new BasicNameValuePair(StorageLoginInfoEnum.pass_ticket.getKey(), (String) storage.getLoginInfo().get(StorageLoginInfoEnum.pass_ticket.getKey())));
-        params.add(new BasicNameValuePair(StorageLoginInfoEnum.skey.getKey(), (String) storage.getLoginInfo().get(StorageLoginInfoEnum.skey.getKey())));
-        params.add(new BasicNameValuePair("r", String.valueOf(String.valueOf(new Date().getTime()))));
-        HttpEntity entity = HttpClient.doGet(url, params, true, null);
+        Map<String, Object> paramMap = storage.getParamMap();
+        HttpEntity entity = HttpClient.doPost(url, JSON.toJSONString(paramMap));
 
         try {
             String result = EntityUtils.toString(entity, "UTF-8");
