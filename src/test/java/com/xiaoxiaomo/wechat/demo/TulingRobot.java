@@ -3,7 +3,7 @@ package com.xiaoxiaomo.wechat.demo;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.xiaoxiaomo.wechat.WeChat;
-import com.xiaoxiaomo.wechat.service.MsgService;
+import com.xiaoxiaomo.wechat.service.MsgHandleService;
 import com.xiaoxiaomo.wechat.utils.commmon.download.DownloadTools;
 import com.xiaoxiaomo.wechat.utils.commmon.http.HttpClient;
 import com.xiaoxiaomo.wechat.utils.enums.MsgInfoEnum;
@@ -24,7 +24,7 @@ import java.util.logging.Logger;
  * @version 1.0
  *
  */
-public class TulingRobot implements MsgService {
+public class TulingRobot implements MsgHandleService {
 	String apiKey = "597b34bea4ec4c85a775c469c84b6817";
 	Logger logger = Logger.getLogger("TulingRobot");
 
@@ -75,7 +75,7 @@ public class TulingRobot implements MsgService {
 	}
 
 	public static void main(String[] args) {
-		MsgService msgHandler = new TulingRobot();
+		MsgHandleService msgHandler = new TulingRobot();
 		WeChat wechat = new WeChat(msgHandler, "D://itchat4j/login");
 		wechat.start();
 	}

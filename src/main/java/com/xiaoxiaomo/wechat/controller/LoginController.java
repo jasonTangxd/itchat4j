@@ -1,5 +1,6 @@
 package com.xiaoxiaomo.wechat.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.xiaoxiaomo.wechat.core.Storage;
 import com.xiaoxiaomo.wechat.service.LoginService;
 import com.xiaoxiaomo.wechat.service.imp.LoginServiceImp;
@@ -52,20 +53,27 @@ public class LoginController {
         }
 
 
-        //微信初始化
-        loginService.webWxInit();
+        LOG.info("5. 登陆成功，微信初始化");
+        JSONObject object = loginService.webWxInit();
+        if( object == null ){
+            LOG.info("6. 微信初始化异常");
+            System.exit(0);
+        }
 
-        //微信状态通知
+
+        LOG.info("6. 开启微信状态通知");
         loginService.wxStatusNotify();
 
+
+        LOG.info("6. 清除。。。。");
         CommonTools.clearScreen();
         LOG.info(String.format("LoginServiceImp successfully as %s", core.getNickName()));
 
 
-        //接收消息
+        LOG.info("7. 接收消息");
         loginService.startReceiving();
 
-        //. 获取信息
+        LOG.info("8. 获取联系人信息");
         loginService.webWxGetContact();
         return ResultEnum.SUCCESS.getCode();
     }

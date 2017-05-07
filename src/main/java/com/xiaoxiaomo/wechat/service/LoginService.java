@@ -2,11 +2,9 @@ package com.xiaoxiaomo.wechat.service;
 
 import com.alibaba.fastjson.JSONObject;
 
-import java.util.Map;
-
 /**
  *
- * 登陆处理接口
+ * 登陆处理接口服务
  *
  * Created by xiaoxiaomo on 2017/5/7.
  */
